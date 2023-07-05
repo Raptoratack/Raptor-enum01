@@ -1,0 +1,110 @@
+#!/bin/bash
+
+function Ctrl_c(){
+    echo -e "${COLOR_AMARILLO}\n[+]Seguro que quieres salir?\n${COLOR_RESET}"
+    read -p "y/n: " respuesta
+    echo
+    if [ $respuesta == "y" ]; then
+        echo -e "${COLOR_ROJO}[-]Saliendo\n\n${COLOR_RESET}"
+        exit 1
+    else
+        echo -e "${COLOR_AMARILLO}\nSeguimos en el prigrama\n\n${COLOR_RESET}"
+    fi
+}
+#salir del programa
+trap Ctrl_c SIGINT
+
+#Variables
+
+
+#COLORES
+COLOR_NEGRO='\033[0;30m'
+COLOR_ROJO='\033[0;31m'
+COLOR_VERDE='\033[0;32m'
+COLOR_AMARILLO='\033[0;33m'
+COLOR_AZUL='\033[0;34m'
+COLOR_RESET='\033[0m'
+
+function mostrar_menu(){
+    echo -e "${COLOR_AZUL}\n*************Enumeraciòn y Reconocimiento*************\n\n${COLOR_RESET}"
+	echo -e "${COLOR_VERDE}[0]${COLOR_RESET} ${COLOR_AMARILLO}Directorios de trabajo${COLOR_RESET}"
+    echo -e "${COLOR_VERDE}[1]${COLOR_RESET} ${COLOR_AMARILLO}Comprobar conectividad con el host victima${COLOR_RESET}"
+    echo -e "${COLOR_VERDE}[2]${COLOR_RESET} ${COLOR_AMARILLO}Realizar escaneo de puertos con nmap${COLOR_RESET}"
+    echo -e "${COLOR_VERDE}[3]${COLOR_RESET} ${COLOR_AMARILLO}Realizar descubrimiento de directorios y ficheros con nmap${COLOR_RESER}"
+    echo -e "${COLOR_VERDE}[4]${COLOR_RESET} ${COLOR_AMARILLO}VirtualHosting${COLOR_RESET}\n"
+    echo -e "${COLOR_AMARILLO}Ingrese la opcion deseada\n${COLOR_RESET}"
+}
+
+function opciones_menu(){
+
+    clear
+    toilet -f future "Raptor-enum01"
+    mostrar_menu
+
+    read -p "Opcion: " opcion
+
+    case $opcion in
+    	0)	#Creacion de directorios de trabajo
+    		echo -e "${COLOR_AMARILLO}\nHa seleccionado la opcion 0${COLOR_RESET}"
+    		echo -e "${COLOR_AMARILLO}Creando carpetas de trabajo...\n${COLOR_RESET}"
+    		sleep 4
+    		directorios=$(mkdir resours nmap content exploits;ls -la)
+    		echo "$directorios"
+    		echo -e "${COLOR_VERDE}\n[+]Carpetas creadas con exito\n${COLOR_RESET}"
+    		;;
+        1)	#Comprobar onectividad con el host victima
+            echo -e "${COLOR_AMARILLO}\nHa seleccionado la opcion 1${COLOR_RESET}"
+            echo -e "${COLOR_AMARILLO}Comprobando conectivida...\n${COLOR_RESET}"
+            read -p "Direccion ip: " host
+            sleep 2
+            HostConectivity=$(ping -c 1 $host | grep "ttl" | awk '{print $6}')
+			if [ $HostConectivity == "ttl=64" ]; then
+				echo -e "\n${COLOR_VERDE}$host - Maquina Linux - $HostConectivity\n${COLOR_RESET}"
+			elif [ $HostConectivity == "ttl=63" ]; then
+				echo  -e "${COLOR_VERDE}\n$host - Maquina Linux - $HostConectivity\n${COLOR_RESET}"
+			elif [ $HostConectivity == "ttl=127" ]; then
+				echo -e "${COLOR_AZUL}\n$host - Maquina Windows - $HostConectivity\n${COLOR_RESET}"
+			elif [ $HostConectivity == "ttl=128" ]; then
+				echo -e "${COLOR_AZUL}\n$host - Maquina Windows - $HostConectivity\n${COLOR_RESET}"
+			else
+				echo -e "${COLOR_ROJO}\nSin conectividad\n${COLOR_RESET}"
+			fi
+            ;;
+        2)	#Escaneo de puertos y servicios
+            echo -e "${COLOR_AMARILLO}\n[+]Ha seleccionado la opcion 2${COLOR_RESET}"
+            read -p "Indica el host: " host
+            echo -e "${COLOR_AMARILLO}\n[+]Realizando escaneo de puertos con nmap${COLOR_RESET}"
+            echo -e "${COLOR_AMARILLO}[+]Parametros: nmap -p- --open -sCV -n -vvv --min-rate 5000 -oN${COLOR_RESET}"
+         	echo -e "${COLOR_AMARILLO}[+]Al terminar el escaneo, los resultados seran almacenados en un archivo llamado 'Ports'\n${COLOR_RESET}"
+            scanports=$(sudo nmap -p- --open -sCV -n -vvv --min-rate 5000 $host -oN Ports &>/dev/null)
+            echo "$scanports"
+            view=$(cat Ports)
+            echo -e "${COLOR_AZUL}\n$view\n${COLOR_RESET}"
+            ;;
+        3)	#Escaneo de directorios y ficheros del host victima
+            echo -e "${COLOR_AMARILLO}\nHa seleccionado la opcion 3${COLOR_RESET}"
+            echo -e "${COLOR_AMARILLO}Descubriendo directorios y ficheros con nmap[http-enum]\n${COLOR_RESET}"
+            read -p "Indica el host: " host
+            read -p "Indica el puerto: " port
+            echo
+            conected=$(sudo nmap --script http-enum -p$port $host)
+            echo "${COLOR_ROJO}$conected${COLOR_RESET}"
+            ;;
+        4)	#Detectar si se esta aplicando VirtualHosting
+            echo -e "${COLOR_AMARILLO}\n[+]Ha seleccionado la opcion 4${COLOR_RESET}"
+            echo -e "${COLOR_AMARILLO}[+]Detectando existencia de dominios o subdominios\n${COLOR_RESET}" 
+			sleep 4
+            Domains=$(grep -o '\w*\.htb' Ports)
+            echo -e "${COLOR_ROJO}[-]$Domains${COLOR_RESET}"
+            ;;
+    esac
+			#Volver al menu
+    echo
+    echo -e "${COLOR_AZUL}[*]Precione cualquier tecla para continuar${COLOR_RESET}"
+    read -n 1
+}
+
+
+while true; do
+    opciones_menu
+done
