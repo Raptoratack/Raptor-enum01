@@ -27,11 +27,12 @@ COLOR_RESET='\033[0m'
 
 function mostrar_menu(){
     echo -e "${COLOR_AZUL}\n*************Enumeraciòn y Reconocimiento*************\n\n${COLOR_RESET}"
-	echo -e "${COLOR_VERDE}[0]${COLOR_RESET} ${COLOR_AMARILLO}Directorios de trabajo${COLOR_RESET}"
+    echo -e "${COLOR_VERDE}[0]${COLOR_RESET} ${COLOR_AMARILLO}Directorios de trabajo${COLOR_RESET}"
     echo -e "${COLOR_VERDE}[1]${COLOR_RESET} ${COLOR_AMARILLO}Comprobar conectividad con el host victima${COLOR_RESET}"
     echo -e "${COLOR_VERDE}[2]${COLOR_RESET} ${COLOR_AMARILLO}Realizar escaneo de puertos con nmap${COLOR_RESET}"
     echo -e "${COLOR_VERDE}[3]${COLOR_RESET} ${COLOR_AMARILLO}Realizar descubrimiento de directorios y ficheros con nmap${COLOR_RESER}"
     echo -e "${COLOR_VERDE}[4]${COLOR_RESET} ${COLOR_AMARILLO}VirtualHosting${COLOR_RESET}\n"
+    echo -e "${COLOR_VERDE}[5]${COLOR_RESET} ${COLOR_ROJO}Auditoria Web${COLOR_RESET}\n"
     echo -e "${COLOR_AMARILLO}Ingrese la opcion deseada\n${COLOR_RESET}"
 }
 
@@ -44,61 +45,146 @@ function opciones_menu(){
     read -p "Opcion: " opcion
 
     case $opcion in
-    	0)	#Creacion de directorios de trabajo
-    		echo -e "${COLOR_AMARILLO}\nHa seleccionado la opcion 0${COLOR_RESET}"
-    		echo -e "${COLOR_AMARILLO}Creando carpetas de trabajo...\n${COLOR_RESET}"
-    		sleep 4
-    		directorios=$(mkdir resours nmap content exploits;ls -la)
-    		echo "$directorios"
-    		echo -e "${COLOR_VERDE}\n[+]Carpetas creadas con exito\n${COLOR_RESET}"
-    		;;
-        1)	#Comprobar onectividad con el host victima
+        0)  #Creacion de directorios de trabajo
+            echo -e "${COLOR_AMARILLO}\nHa seleccionado la opcion 0${COLOR_RESET}"
+            echo -e "${COLOR_AMARILLO}Creando carpetas de trabajo...\n${COLOR_RESET}"
+            sleep 2
+            directorios=$(mkdir resours nmap content exploits;ls -la)
+            echo "$directorios"
+            echo -e "${COLOR_VERDE}\n[+]Carpetas creadas con exito\n${COLOR_RESET}"
+            read -p "Con cual carpeta desea iniciar: " carpeta
+            echo -e "${COLOR_ROJO}--------------------------------------------${COLOR_RESET}"
+            echo -e "\nUsted se encuentra ahora en $carpeta\n"
+            cd "$carpeta"
+            pwd
+            echo -e "${COLOR_ROJO}--------------------------------------------${COLOR_RESET}"
+            ;;
+        1)  #Comprobar onectividad con el host victima
             echo -e "${COLOR_AMARILLO}\nHa seleccionado la opcion 1${COLOR_RESET}"
             echo -e "${COLOR_AMARILLO}Comprobando conectivida...\n${COLOR_RESET}"
             read -p "Direccion ip: " host
             sleep 2
             HostConectivity=$(ping -c 1 $host | grep "ttl" | awk '{print $6}')
-			if [ $HostConectivity == "ttl=64" ]; then
-				echo -e "\n${COLOR_VERDE}$host - Maquina Linux - $HostConectivity\n${COLOR_RESET}"
-			elif [ $HostConectivity == "ttl=63" ]; then
-				echo  -e "${COLOR_VERDE}\n$host - Maquina Linux - $HostConectivity\n${COLOR_RESET}"
-			elif [ $HostConectivity == "ttl=127" ]; then
-				echo -e "${COLOR_AZUL}\n$host - Maquina Windows - $HostConectivity\n${COLOR_RESET}"
-			elif [ $HostConectivity == "ttl=128" ]; then
-				echo -e "${COLOR_AZUL}\n$host - Maquina Windows - $HostConectivity\n${COLOR_RESET}"
-			else
-				echo -e "${COLOR_ROJO}\nSin conectividad\n${COLOR_RESET}"
-			fi
+            if [ $HostConectivity == "ttl=64" ]; then
+                echo -e "\n${COLOR_VERDE}$host - Maquina Linux - $HostConectivity\n${COLOR_RESET}"
+            elif [ $HostConectivity == "ttl=63" ]; then
+                echo  -e "${COLOR_VERDE}\n$host - Maquina Linux - $HostConectivity\n${COLOR_RESET}"
+            elif [ $HostConectivity == "ttl=127" ]; then
+                echo -e "${COLOR_AZUL}\n$host - Maquina Windows - $HostConectivity\n${COLOR_RESET}"
+            elif [ $HostConectivity == "ttl=128" ]; then
+                echo -e "${COLOR_AZUL}\n$host - Maquina Windows - $HostConectivity\n${COLOR_RESET}"
+            else
+                echo -e "${COLOR_ROJO}\nSin conectividad\n${COLOR_RESET}"
+            fi
             ;;
-        2)	#Escaneo de puertos y servicios
+        2)  #Escaneo de puertos y servicios
             echo -e "${COLOR_AMARILLO}\n[+]Ha seleccionado la opcion 2${COLOR_RESET}"
             read -p "Indica el host: " host
             echo -e "${COLOR_AMARILLO}\n[+]Realizando escaneo de puertos con nmap${COLOR_RESET}"
-            echo -e "${COLOR_AMARILLO}[+]Parametros: nmap -p- --open -sCV -n -vvv --min-rate 5000 -oN${COLOR_RESET}"
-         	echo -e "${COLOR_AMARILLO}[+]Al terminar el escaneo, los resultados seran almacenados en un archivo llamado 'Ports'\n${COLOR_RESET}"
+            echo -e "${COLOR_AMARILLO}[+]Parametros: nmap -p- --open -sCV -n --min-rate 5000 -oN${COLOR_RESET}"
+            echo -e "${COLOR_AMARILLO}[+]Al terminar el escaneo, los resultados seran almacenados en un archivo llamado 'Ports'\n${COLOR_RESET}"
             scanports=$(sudo nmap -p- --open -sCV -n -vvv --min-rate 5000 $host -oN Ports &>/dev/null)
             echo "$scanports"
             view=$(cat Ports)
             echo -e "${COLOR_AZUL}\n$view\n${COLOR_RESET}"
             ;;
-        3)	#Escaneo de directorios y ficheros del host victima
+        3)  #Escaneo de directorios y ficheros del host victima
             echo -e "${COLOR_AMARILLO}\nHa seleccionado la opcion 3${COLOR_RESET}"
             echo -e "${COLOR_AMARILLO}Descubriendo directorios y ficheros con nmap[http-enum]\n${COLOR_RESET}"
             read -p "Indica el host: " host
             read -p "Indica el puerto: " port
             echo
             conected=$(sudo nmap --script http-enum -p$port $host)
-            echo "${COLOR_ROJO}$conected${COLOR_RESET}"
+            echo -e "${COLOR_ROJO}$conected${COLOR_RESET}\n"
+            echo -e "\n[+]Quieres que ejecute un escaneo mas exaustivo?\n"
+            read -p "y/n: " respuesta
+            echo
+            if [ $respuesta == "y" ]; then
+              echo -e "[+]Tipo de escaneo: gobuster dir -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://$host -t 200  --no-error\n"
+              directoryScan=$(gobuster dir -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://$host -t 200 --no-error)
+              echo -e "\n$directoryScan\n"
+            else
+              echo -e "[+]OK\n"
+            fi
             ;;
-        4)	#Detectar si se esta aplicando VirtualHosting
+        4)  #Detectar si se esta aplicando VirtualHosting
             echo -e "${COLOR_AMARILLO}\n[+]Ha seleccionado la opcion 4${COLOR_RESET}"
             echo -e "${COLOR_AMARILLO}[+]Detectando existencia de dominios o subdominios\n${COLOR_RESET}" 
-			sleep 4
+            sleep 4
             Domains=$(grep -o '\w*\.htb' Ports)
+            Domains2=$(grep -o '\w*\.local' Ports)
+            Domains3=$(grep -o '\w*\.com' Ports)
             echo -e "${COLOR_ROJO}[-]$Domains${COLOR_RESET}"
+            echo -e "${COLOR_ROJO}[-]$Domains2${COLOR_RESET}"
+            echo -e "${COLOR_ROJO}[-]$Domains3${COLOR_RESET}"
+            ;;
+        5)  #Enumeracion por smb, http y ldap
+            echo
+            read -p "Indica el host victima: " host
+            sleep 2
+            HostConectivity=$(ping -c 1 $host | grep "ttl" | awk '{print $6}')
+            if [ $HostConectivity == "ttl=64" ]; then
+                echo -e "\n${COLOR_VERDE}$host - Maquina Linux - $HostConectivity\n${COLOR_RESET}"
+            elif [ $HostConectivity == "ttl=63" ]; then
+                echo  -e "${COLOR_VERDE}\n$host - Maquina Linux - $HostConectivity\n${COLOR_RESET}"
+            elif [ $HostConectivity == "ttl=127" ]; then
+                echo -e "${COLOR_AZUL}\n$host - Maquina Windows - $HostConectivity\n${COLOR_RESET}"
+                echo -e "${COLOR_AMARILLO}Verificando si el puerto 445 se encuentra abierto...${COLOR_RESET}"
+                smb=$(cat Ports | grep "445/tcp" | awk '{print $2}')
+                echo -e "${COLOR_AMARILLO}El puerto 445 se encuentra $smb\n${COLOR_RESET}"
+                sleep 8
+                if [ "$smb" == "open" ]; then
+                    echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}Listando caracteristicas de la maquina Windows${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}Crackmapexec smb $host\n${COLOR_RESET}"
+                    crackmapexec smb $host
+                    echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}Listando recursos compartidos a nivel de red${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}SmbClient -L $host -N\n${COLOR_RESET}"
+                    smbclient -L $host -N
+                    echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}Comprobando capacidad de rwx en recursos existentes${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}SmbMap -H $host -u 'null'\n${COLOR_RESET}"
+                    smbmap -H $host -u "null"
+                    echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
+                    exit 1
+                else
+                    echo -e "${COLOR_ROJO}El puerto 445 se encuentra cerrado${COLOR_RESET}"
+                fi
+            elif [ $HostConectivity == "ttl=128" ]; then
+                echo -e "${COLOR_AZUL}\n$host - Maquina Windows - $HostConectivity\n${COLOR_RESET}"
+                echo -e "${COLOR_AMARILLO}Iniciado face de reconocimiento a maquina windows${COLOR_RESET}"
+                echo -e "${COLOR_AMARILLO}Detectando puerto 445 habierto...${COLOR_RESET}"
+                smb=$(cat Ports | grep "445/tcp" | awk '{print $2}')
+                echo -e "${COLOR_AMARILLO}El puerto 445 se encuentra $smb\n${COLOR_RESET}"
+                sleep 8
+                if [ "$smb" == "open" ]; then
+                    echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}Listando caracteristicas de la maquina Windows${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}Crackmapexec smb $host\n${COLOR_RESET}"
+                    crackmapexec smb $host
+                    sleep 5
+                    echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}Listando recursos compartidos a nivel de red${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}\nSmbClient -L $host -N\n${COLOR_RESET}"
+                    smbclient -L $host -N
+                    sleep 5
+                    echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}Comprobando capacidad de rwx en recursos existentes${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}\nSmbMap -H $host -u 'null'\n${COLOR_RESET}"
+                    smbmap -H $host -u "null"
+                    sleep 5
+                    echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
+                    exit 1
+                else
+                    echo -e "${COLOR_ROJO}El puerto 445 se encuentra cerrado${COLOR_RESET}"
+                fi
+            else
+                echo -e "${COLOR_ROJO}\nSin conectividad\n${COLOR_RESET}"
+            fi
             ;;
     esac
-			#Volver al menu
+            #Volver al menu
     echo
     echo -e "${COLOR_AZUL}[*]Precione cualquier tecla para continuar${COLOR_RESET}"
     read -n 1
