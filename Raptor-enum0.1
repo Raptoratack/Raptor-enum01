@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#Install toilet(baner)
+sudo apt install toilet -y
+
 function Ctrl_c(){
     echo -e "${COLOR_AMARILLO}\n[+]Seguro que quieres salir?\n${COLOR_RESET}"
     read -p "y/n: " respuesta
@@ -48,7 +51,6 @@ function opciones_menu(){
         0)  #Creacion de directorios de trabajo
             echo -e "${COLOR_AMARILLO}\nHa seleccionado la opcion 0${COLOR_RESET}"
             echo -e "${COLOR_AMARILLO}Creando carpetas de trabajo...\n${COLOR_RESET}"
-            sleep 2
             directorios=$(mkdir resours nmap content exploits;ls -la)
             echo "$directorios"
             echo -e "${COLOR_VERDE}\n[+]Carpetas creadas con exito\n${COLOR_RESET}"
@@ -81,9 +83,9 @@ function opciones_menu(){
             echo -e "${COLOR_AMARILLO}\n[+]Ha seleccionado la opcion 2${COLOR_RESET}"
             read -p "Indica el host: " host
             echo -e "${COLOR_AMARILLO}\n[+]Realizando escaneo de puertos con nmap${COLOR_RESET}"
-            echo -e "${COLOR_AMARILLO}[+]Parametros: nmap -p- --open -sCV -n --min-rate 5000 -oN${COLOR_RESET}"
+            echo -e "${COLOR_AMARILLO}[+]Parametros: nmap -p- --open -sS -sV -n --min-rate 5000 -oN${COLOR_RESET}"
             echo -e "${COLOR_AMARILLO}[+]Al terminar el escaneo, los resultados seran almacenados en un archivo llamado 'Ports'\n${COLOR_RESET}"
-            scanports=$(sudo nmap -p- --open -sCV -n -vvv --min-rate 5000 $host -oN Ports &>/dev/null)
+            scanports=$(sudo nmap -p- --open -sS -sV -n --min-rate 5000 $host -oN Ports &>/dev/null)
             echo "$scanports"
             view=$(cat Ports)
             echo -e "${COLOR_AZUL}\n$view\n${COLOR_RESET}"
@@ -100,8 +102,8 @@ function opciones_menu(){
             read -p "y/n: " respuesta
             echo
             if [ $respuesta == "y" ]; then
-              echo -e "[+]Tipo de escaneo: gobuster dir -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://$host -t 200  --no-error\n"
-              directoryScan=$(gobuster dir -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http://$host -t 200 --no-error)
+              echo -e "[+]Tipo de escaneo: gobuster dir -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u http/s://$host -t 100 --no-error\n"
+              directoryScan=$(gobuster dir -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -u https://$host -t 100 --no-error)
               echo -e "\n$directoryScan\n"
             else
               echo -e "[+]OK\n"
@@ -147,13 +149,18 @@ function opciones_menu(){
                     echo -e "${COLOR_VERDE}SmbMap -H $host -u 'null'\n${COLOR_RESET}"
                     smbmap -H $host -u "null"
                     echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}Intentando interactuar servicios y sistemas que implementan el protocolo RPC(135)${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}rpcclient -U "''" $host -N\n${COLOR_RESET}"
+                    rpcclient -U "" $host -N
+                    sleep 3
+                    echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
                     exit 1
                 else
                     echo -e "${COLOR_ROJO}El puerto 445 se encuentra cerrado${COLOR_RESET}"
                 fi
             elif [ $HostConectivity == "ttl=128" ]; then
                 echo -e "${COLOR_AZUL}\n$host - Maquina Windows - $HostConectivity\n${COLOR_RESET}"
-                echo -e "${COLOR_AMARILLO}Iniciado face de reconocimiento a maquina windows${COLOR_RESET}"
+                echo -e "${COLOR_AMARILLO}Iniciado fase de reconocimiento a maquina windows${COLOR_RESET}"
                 echo -e "${COLOR_AMARILLO}Detectando puerto 445 habierto...${COLOR_RESET}"
                 smb=$(cat Ports | grep "445/tcp" | awk '{print $2}')
                 echo -e "${COLOR_AMARILLO}El puerto 445 se encuentra $smb\n${COLOR_RESET}"
@@ -174,6 +181,11 @@ function opciones_menu(){
                     echo -e "${COLOR_VERDE}\nSmbMap -H $host -u 'null'\n${COLOR_RESET}"
                     smbmap -H $host -u "null"
                     sleep 5
+                    echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}Intentando interactuar servicios y sistemas que implementan el protocolo RPC(135)${COLOR_RESET}"
+                    echo -e "${COLOR_VERDE}rpcclient -U "''" $host -N\n${COLOR_RESET}"
+                    rpcclient -U "" $host -N
+                    sleep 3
                     echo -e "${COLOR_ROJO}---------------------------${COLOR_RESET}"
                     exit 1
                 else
